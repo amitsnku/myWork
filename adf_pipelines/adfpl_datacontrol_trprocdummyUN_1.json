@@ -1,10 +1,10 @@
 {
-    "name": "adfpl_datacontrol_transitprocaskou_1",
+    "name": "adfpl_datacontrol_transitprocdummyUN_1",
     "properties": {
         "activities": [
             {
-                "name": "ntbk_writing_sr_history_data_into_cosmosdb",
-                "description": "This databricks notebook writing data into cosmosdb for dummy_history and also this notebook creating intermediate file into DataService/Projects / AskOU / SRdata ",
+                "name": "ntbk_writing_dummy_data_into_cosmosdb",
+                "description": "This databricks notebook writing data into cosmosdb for dummy_history and also this notebook creating intermediate file into DataService/Projects / dummyUN / SRdata ",
                 "type": "DatabricksNotebook",
                 "dependsOn": [],
                 "policy": {
@@ -16,7 +16,7 @@
                 },
                 "userProperties": [],
                 "typeProperties": {
-                    "notebookPath": "/dummyUN/adb_notebook_sr_data_integration_1",
+                    "notebookPath": "/dummyUN/adb_notebook_dummy_integration_1",
                     "baseParameters": {
                         "adfglparam_dummyUN_cosmos_endpoint_1": {
                             "value": "@pipeline().parameters.adfglparam_dummyUN_cosmos_endpoint_1",
