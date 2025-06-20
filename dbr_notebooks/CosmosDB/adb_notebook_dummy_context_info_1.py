@@ -744,14 +744,14 @@ if 'dummyUN' not in dbutils.fs.ls('dbfs:/mnt/dummydatalake/DataService/Projects/
     dbutils.fs.mkdirs(f'dbfs:/mnt/dummydatalake/DataService/Projects/Student/dummyUN/CosmosDB/metadata')
 
 
-# askou_path = studentpath+'dummyUN/'
+# dummy_path = studentpath+'dummyUN/'
 json_path = SV_FL_METADATA+mtdt_file
 
 # Check if the file exists
 try:
     if not any(file.name == mtdt_file for file in dbutils.fs.ls(SV_FL_METADATA)):
     # Create an empty JSON file
-        dbutils.fs.put(json_path, '{"sr_history":"","std_data": ""}',True)
+        dbutils.fs.put(json_path, '{"dummy_history":"","dummy_data": ""}',True)
         print("Empty JSON file created.")
     else:
         print("File already exists.")
@@ -799,8 +799,8 @@ import base64
 
 # COMMAND ----------
 
-dbutils.widgets.text("adfglparam_askou_cosmos_endpoint_1", "")
-askou_cosmos_endpoint = dbutils.widgets.get("adfglparam_askou_cosmos_endpoint_1")
+dbutils.widgets.text("adfglparam_dummy_cosmos_endpoint_1", "")
+dummy_cosmos_endpoint = dbutils.widgets.get("adfglparam_dummy_cosmos_endpoint_1")
 
 # COMMAND ----------
 
@@ -815,12 +815,12 @@ SUFFIX = ".parquet"
 
 # Cosmos configuration
 
-cosmos_endpoint=askou_cosmos_endpoint
+cosmos_endpoint=dummy_cosmos_endpoint
 
-cosmos_database = "askou"
-std_data_container = "std_data"
+cosmos_database = "dummy"
+dummy_data_container = "dummy_data"
 metadata_file = "cosmos_metadata.json"
-metadata_key = "std_data"
+metadata_key = "dummy_data"
 metadata_path  = f"{SAVE_FILE_METDATA}{metadata_file}"
 
 # Presentations prior to the given wont be included in the final data
@@ -828,8 +828,8 @@ MIN_PRESENTATION_CODE = '2020B'
 
 # Initial metadata structure with None values
 default_metadata = {
-    "sr_history": None,
-    "std_data": None
+    "dummy_history": None,
+    "dummy_data": None
 }
 
 # COMMAND ----------
@@ -854,8 +854,8 @@ default_metadata = {
 #     database = cosmos_client1.create_database_if_not_exists(id=cosmos_database)
 
 #     # Convert PySpark DataFrame to Pandas
-#     # if std_data_mod:
-#     #     std_data_pd = std_data_mod.toPandas()
+#     # if dummy_data_mod:
+#     #     dummy_data_pd = dummy_data_mod.toPandas()
 #     #     print("Successfully connected to Cosmos DB and converted DataFrame to Pandas.")
 #     # else:
 #     #     dbutils.notebook.exit(f"SR history DataFrame is empty. Aborting ")
@@ -1929,14 +1929,14 @@ except Exception as e:
 # COMMAND ----------
 
 try:
-    std_data_mod = mod_pop_final
+    dummy_data_mod = mod_pop_final
 
     # Cast types for columns based on schema
-    for field in std_data_mod.schema.fields:
+    for field in dummy_data_mod.schema.fields:
         if isinstance(field.dataType, DecimalType):
-            std_data_mod = std_data_mod.withColumn(field.name, std_data_mod[field.name].cast(DoubleType()))
+            dummy_data_mod = dummy_data_mod.withColumn(field.name, dummy_data_mod[field.name].cast(DoubleType()))
         if isinstance(field.dataType, DateType):
-            std_data_mod = std_data_mod.withColumn(field.name, std_data_mod[field.name].cast(StringType()))
+            dummy_data_mod = dummy_data_mod.withColumn(field.name, dummy_data_mod[field.name].cast(StringType()))
 
     # Display the updated DataFrame schema
     print("Schema successfully updated and displayed.")
@@ -1967,7 +1967,7 @@ try:
     dbutils.fs.mkdirs(output_path)
 
     # Save DataFrame
-    final_output_path = save_parquet_file(std_data_mod, output_path, final_output_base_path)
+    final_output_path = save_parquet_file(dummy_data_mod, output_path, final_output_base_path)
     print(f"Successfully saved DataFrame to Parquet at {final_output_path}")
 
 except Exception as e:
@@ -1981,7 +1981,7 @@ except Exception as e:
 from pyspark.sql.utils import AnalysisException
 
 try:
-    std_data_mod_parq = spark.read.parquet(final_output_path)
+    dummy_data_mod_parq = spark.read.parquet(final_output_path)
     print("Parquet file loaded successfully.")
 except AnalysisException as ae:
     print(f"AnalysisException occurred: {ae}")
@@ -1992,7 +1992,7 @@ except Exception as e:
 # COMMAND ----------
 
 try:
-    upsert_student_data(cosmos_database, std_data_container, std_data_mod_parq)# pyspark dataframe std_data_mod
+    upsert_student_data(cosmos_database, dummy_data_container, dummy_data_mod_parq)# pyspark dataframe dummy_data_mod
     print("Successfully upserted data into Cosmos DB.")
 except Exception as e:
     dbutils.notebook.exit(f"Error upserting data into Cosmos DB: {e}")
