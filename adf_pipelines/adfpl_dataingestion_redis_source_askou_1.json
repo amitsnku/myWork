@@ -1,0 +1,545 @@
+{
+    "name": "adfpl_dataingestion_redis_source_dummyUN_1",
+    "properties": {
+        "description": "ingest data from dummyUN redis cache to dummy data lake",
+        "activities": [
+            {
+                "name": "adfactvtyforeach_sourcetable_1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "adfactvtyfilter_completedactivities_1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('adfactvtyfilter_completedactivities_1').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "adfactvtylkp_insertlog_1",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [
+                                {
+                                    "name": "object_name",
+                                    "value": "@{item().activity_object_name}"
+                                }
+                            ],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "SqlSource",
+                                    "sqlReaderStoredProcedureName": "[audit].[insertdataflowlog]",
+                                    "storedProcedureParameters": {
+                                        "activityid": {
+                                            "type": "Int32",
+                                            "value": {
+                                                "value": "@{item().activity_id}",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        "batchid": {
+                                            "type": "Int32",
+                                            "value": {
+                                                "value": "@pipeline().parameters.adfplparam_batch_id_1",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        "dfname": {
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@pipeline().DataFactory",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        "plname": {
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@pipeline().Pipeline",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        "layer": {
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@pipeline().parameters.adfplparam_dataflowlayer_1",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        "sourcefilename": {
+                                            "type": "String",
+                                            "value": {
+                                                "value": "(Not Applicable)",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    },
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "adfds_dif_sqldb_1",
+                                    "type": "DatasetReference"
+                                },
+                                "firstRowOnly": false
+                            }
+                        },
+                        {
+                            "name": "adfactvtysp_updatelog_1",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [
+                                {
+                                    "activity": "ntbk_dummyUN_redis_to_dummyDatalake",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [
+                                {
+                                    "name": "object_name",
+                                    "value": "@{item().activity_object_name}"
+                                }
+                            ],
+                            "typeProperties": {
+                                "storedProcedureName": "[audit].[updatedataflowlog]",
+                                "storedProcedureParameters": {
+                                    "dataflowid": {
+                                        "value": {
+                                            "value": "@activity('adfactvtylkp_insertlog_1').output.value[0].df_id",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "dfname": {
+                                        "value": {
+                                            "value": "@pipeline().DataFactory",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "plname": {
+                                        "value": {
+                                            "value": "@pipeline().Pipeline",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "rowsread": {
+                                        "value": {
+                                            "value": "-1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "rowswritten": {
+                                        "value": {
+                                            "value": "-1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "layer": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_dataflowlayer_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "batchid": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_batch_id_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "skippedrowspath": {
+                                        "value": {
+                                            "value": "'NA'",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "rowsskipped": {
+                                        "value": {
+                                            "value": "-1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "adfls_cloud_sqldb_diframework_1",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "adfactvtysp_alerterror_1",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [
+                                {
+                                    "activity": "adfactvtylkp_insertlog_1",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [
+                                {
+                                    "name": "object_name",
+                                    "value": "@{item().activity_object_name}"
+                                }
+                            ],
+                            "typeProperties": {
+                                "storedProcedureName": "[audit].[alerterror]",
+                                "storedProcedureParameters": {
+                                    "dfname": {
+                                        "value": {
+                                            "value": "@pipeline().DataFactory",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "id": {
+                                        "value": {
+                                            "value": "@int(if(contains(activity('adfactvtylkp_insertlog_1').output.value[0],'df_id'),'1','0'))",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "plname": {
+                                        "value": {
+                                            "value": "@pipeline().Pipeline",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "batchid": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_batch_id_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "layer": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_dataflowlayer_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "plid": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_pl_id_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "activityid": {
+                                        "value": {
+                                            "value": "@{item().activity_id}",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "error_description": {
+                                        "value": {
+                                            "value": "@if(contains(activity('adfactvtylkp_insertlog_1').output.value[0],'df_id'),'1',activity('adfactvtylkp_insertlog_1').output.value[0].code_description)\n",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "adfls_cloud_sqldb_diframework_1",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "adfactvtysp_alerterror_ingestion_1",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [
+                                {
+                                    "activity": "ntbk_dummyUN_redis_to_dummyDatalake",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [
+                                {
+                                    "name": "object_name",
+                                    "value": "@{item().activity_object_name}"
+                                }
+                            ],
+                            "typeProperties": {
+                                "storedProcedureName": "[audit].[alerterror]",
+                                "storedProcedureParameters": {
+                                    "dfname": {
+                                        "value": {
+                                            "value": "@pipeline().DataFactory",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "id": {
+                                        "value": {
+                                            "value": "100139",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "plname": {
+                                        "value": {
+                                            "value": "@pipeline().Pipeline",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "batchid": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_batch_id_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "layer": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_dataflowlayer_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "plid": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.adfplparam_pl_id_1",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "activityid": {
+                                        "value": {
+                                            "value": "@{item().activity_id}",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "error_description": {
+                                        "value": {
+                                            "value": "@concat(activity('ntbk_dummyUN_redis_to_dummyDatalake').output.runPageUrl,' : ',activity('ntbk_dummyUN_redis_to_dummyDatalake').output.runError)",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "adfls_cloud_sqldb_diframework_1",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "ntbk_dummyUN_redis_to_dummyDatalake",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "adfactvtysp_alerterror_1",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Redis/adb_notebook_dummyUN_redis_to_dummy",
+                                "baseParameters": {
+                                    "adfglparam_dummyUN_redis_endpoint_1": {
+                                        "value": "@pipeline().parameters.adfglparam_dummyUN_redis_endpoint_1",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "adfls_cloud_adb_databricks_2",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "adfactvtylkp_getextractquerylist_1",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 5,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "SqlSource",
+                        "sqlReaderStoredProcedureName": "[audit].[getextractquery]",
+                        "storedProcedureParameters": {
+                            "dfname": {
+                                "type": "String",
+                                "value": {
+                                    "value": "@pipeline().DataFactory",
+                                    "type": "Expression"
+                                }
+                            },
+                            "plid": {
+                                "type": "Int32",
+                                "value": {
+                                    "value": "@pipeline().parameters.adfplparam_pl_id_1",
+                                    "type": "Expression"
+                                }
+                            },
+                            "plname": {
+                                "type": "String",
+                                "value": {
+                                    "value": "@pipeline().Pipeline",
+                                    "type": "Expression"
+                                }
+                            },
+                            "batchid": {
+                                "type": "Int32",
+                                "value": {
+                                    "value": "@pipeline().parameters.adfplparam_batch_id_1",
+                                    "type": "Expression"
+                                }
+                            },
+                            "layer": {
+                                "type": "String",
+                                "value": {
+                                    "value": "@pipeline().parameters.adfplparam_dataflowlayer_1",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "adfds_dif_sqldb_1",
+                        "type": "DatasetReference"
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "adfactvtyfilter_completedactivities_1",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "adfactvtylkp_getextractquerylist_1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('adfactvtylkp_getextractquerylist_1').output.value",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().df_id,-2)",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "adfplparam_adlsfoldername_1": {
+                "type": "String"
+            },
+            "adfplparam_batch_id_1": {
+                "type": "Int"
+            },
+            "adfplparam_pl_id_1": {
+                "type": "Int"
+            },
+            "adfplparam_dataflowlayer_1": {
+                "type": "String"
+            },
+            "adfplparam_fileconversion_folder_1": {
+                "type": "String"
+            },
+            "adfplparam_adlsg2cname_1": {
+                "type": "string"
+            },
+            "adfplparam_source_name_1": {
+                "type": "string"
+            },
+            "adfglparam_dummyUN_redis_endpoint_1": {
+                "type": "string"
+            },
+            "adfplparam_landingzone_tgtfolder_redis_1": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "adfplvar_datasource_listquery_1": {
+                "type": "String"
+            },
+            "adfplvar_filename_1": {
+                "type": "String"
+            }
+        },
+        "folder": {
+            "name": "adfplfolder_data_dlingest_1"
+        },
+        "annotations": [
+            "platform",
+            "framework"
+        ],
+        "lastPublishTime": "2023-09-11T06:42:52Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

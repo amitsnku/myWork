@@ -1,0 +1,149 @@
+{
+    "name": "adfpl_datacontrol_transitprocaskou_1",
+    "properties": {
+        "activities": [
+            {
+                "name": "ntbk_writing_sr_history_data_into_cosmosdb",
+                "description": "This databricks notebook writing data into cosmosdb for dummy_history and also this notebook creating intermediate file into DataService/Projects / AskOU / SRdata ",
+                "type": "DatabricksNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/dummyUN/adb_notebook_sr_data_integration_1",
+                    "baseParameters": {
+                        "adfglparam_dummyUN_cosmos_endpoint_1": {
+                            "value": "@pipeline().parameters.adfglparam_dummyUN_cosmos_endpoint_1",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "adfls_cloud_adb_databricks_nedw_1",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "MailNotification_dummy_history",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "ntbk_writing_dummy_history_data_into_cosmosdb",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": {
+                        "value": "@pipeline().parameters.adfplparam_dummyUN_logicapp_url_1",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "pipelinename": "@pipeline().Pipeline",
+                        "ErrorMessage": "@concat(activity('ntbk_writing_dummy_history_data_into_cosmosdb').output.runPageUrl,' : ',activity('ntbk_writing_dummy_history_data_into_cosmosdb').output.runOutPut)",
+                        "DataFactoryName": "@pipeline().DataFactory",
+                        "RunId": "@pipeline().RunId"
+                    }
+                }
+            },
+            {
+                "name": "ntbk_writing_std_data_into_cosmosdb",
+                "description": "This databricks notebook writing data into cosmosdb for std_data and also this notebook creating intermediate file into DataService/Projects / dummyUN / Stddata ",
+                "type": "DatabricksNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/dummyUN/adb_notebook_student_context_info_1",
+                    "baseParameters": {
+                        "adfglparam_dummyUN_cosmos_endpoint_1": {
+                            "value": "@pipeline().parameters.adfglparam_dummyUN_cosmos_endpoint_1",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "adfls_cloud_adb_databricks_nedw_1",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "MailNotification_std_data",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "ntbk_writing_std_data_into_cosmosdb",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": {
+                        "value": "@pipeline().parameters.adfplparam_dummyUN_logicapp_url_1",
+                        "type": "Expression"
+                    },
+                    "body": {
+                        "pipelinename": "@pipeline().Pipeline",
+                        "ErrorMessage": "@concat(activity('ntbk_writing_dummy_data_into_cosmosdb').output.runPageUrl,' : ',activity('ntbk_writing_dummy_data_into_cosmosdb').output.runOutPut)",
+                        "DataFactoryName": "@pipeline().DataFactory",
+                        "RunId": "@pipeline().RunId"
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "adfplparam_dummyUN_logicapp_url_1": {
+                "type": "string",
+                "defaultValue": "https://prod-33.anylocation.logic.azure.com:443/"
+            },
+            "adfglparam_dummyUN_cosmos_endpoint_1": {
+                "type": "string",
+                "defaultValue": "https://dummyUNcosmosdbdevuks.documents.azure.com:443/"
+            }
+        },
+        "variables": {
+            "var_srHistory_Error": {
+                "type": "String"
+            },
+            "vr_stdData_Error": {
+                "type": "String"
+            }
+        },
+        "folder": {
+            "name": "adfplfolder_control_dwtransit_1"
+        },
+        "annotations": []
+    }
+}
