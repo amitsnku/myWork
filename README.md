@@ -6,5 +6,4 @@ The codes are relevant to :
 2. ADF:
    Redis : The Redis notebook being called here using ADF pipeline as part of our regular daily ingestion process.Although there are three more ADF pipelines on top of it, But not mention as those are templates we generally follow for all of the ingestion objects.       
    CosmosDB:Same as above the Redis Onc 
-4. Scripts:
-5.   cosmosDB:      
+      
