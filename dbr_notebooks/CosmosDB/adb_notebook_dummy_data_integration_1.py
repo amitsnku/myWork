@@ -1,29 +1,3 @@
-# Databricks notebook source
-# MAGIC %md
-# MAGIC # Voice Service requested, Historical to date data processing
-# MAGIC * Reads voice data from lake via EDMSource
-# MAGIC * Joins activites to SRs (via contact)
-# MAGIC * Filters: 
-# MAGIC   * only a subset of activity and SR types
-# MAGIC   * only text over a certian length
-# MAGIC   * where a least one activity associated with a paritculary queue (owner)
-# MAGIC   * srs created in date range
-# MAGIC * Metadata filter for cosmos based on updated_date
-# MAGIC * Text cleaning
-# MAGIC * Annonymize data
-# MAGIC * Dummy SR, PI and Activity Id 
-# MAGIC * Saves a subset of data in Cosmos DB
-
-# COMMAND ----------
-
-!/local_disk0/.ephemeral_nfs/envs/pythonEnv-aeb852df-e877-496b-9d36-b267f4306ccc/bin/python -m pip install --upgrade pip
-# !local_disk0/.ephemeral_nfs/envs/pythonEnv-fc084d4f-a845-42ff-b648-d9ec0e8f2951/bin/python -m pip install --upgrade pip
-
-#!pip install presidio-analyzer
-#!pip install presidio-anonymizer
-!pip install azure-cosmos
-#!pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.0.0/en_core_web_md-3.0.0.tar.gz
-
 
 
 # COMMAND ----------
@@ -759,19 +733,19 @@ class ModelOutputs:
 
 # COMMAND ----------
 
-dbutils.widgets.text("adfglparam_askou_cosmos_endpoint_1", "")
-askou_cosmos_endpoint = dbutils.widgets.get("adfglparam_askou_cosmos_endpoint_1")
+dbutils.widgets.text("adfglparam_dummy_cosmos_endpoint_1", "")
+dummy_cosmos_endpoint = dbutils.widgets.get("adfglparam_dummy_cosmos_endpoint_1")
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ###### Create AskOU directory under DataService/Projects/Student for first time only - Created by dummy team do not delete below code 
+# MAGIC ###### Create dummy directory under DataService/Projects/Student for first time only - Created by dummy team do not delete below code 
 
 # COMMAND ----------
 
 import os 
 
-SV_FL_METADATA = "dbfs:/mnt/dummydatalake/DataService/Projects/Student/AskOU/CosmosDB/metadata/"
+SV_FL_METADATA = "dbfs:/mnt/dummydatalake/DataService/Projects/Student/dummy/CosmosDB/metadata/"
 mtdt_file = "cosmos_metadata.json"
 dummypath=f'dbfs:/mnt/dummydatalake/DataService/Projects/Student/'
 
@@ -780,14 +754,14 @@ if 'dummyUN' not in dbutils.fs.ls('dbfs:/mnt/dummydatalake/DataService/Projects/
     dbutils.fs.mkdirs(f'dbfs:/mnt/dummydatalake/DataService/Projects/Student/dummyUN/CosmosDB/metadata')
 
 
-# askou_path = dummypath+'dummyUN/'
+# dummy_path = dummypath+'dummyUN/'
 json_path = SV_FL_METADATA+mtdt_file
 
 # Check if the file exists
 try:
     if not any(file.name == mtdt_file for file in dbutils.fs.ls(SV_FL_METADATA)):
     # Create an empty JSON file
-        dbutils.fs.put(json_path, '{"sr_history":"","std_data": ""}',True)
+        dbutils.fs.put(json_path, '{"dummy_history":"","dummy_data": ""}',True)
         print("Empty JSON file created.")
     else:
         print("File already exists.")
@@ -823,14 +797,14 @@ user_id = spark.sql('select current_user() as user').collect()[0]['user']
 VOICE_FILE_PREFIX = "dbfs:/mnt/dummydatalake/DataService/SourceData/ConsolidatedExtract/Voice/"
 # Save file path
 SAVE_FILE_METDATA = "/dbfs/mnt/dummydatalake/DataService/Projects/Student/dummyUN/CosmosDB/metadata/"
-cosmos_endpoint = askou_cosmos_endpoint
-cosmos_database = "askou"
+cosmos_endpoint = dummy_cosmos_endpoint
+cosmos_database = "dummy"
 output_path = "dbfs:/mnt/dummydatalake/DataService/Projects/Student/dummyUN/CosmosDB/Temp/"
 final_output_base_path = "dbfs:/mnt/dummydatalake/DataService/Projects/Student/dummyUN/CosmosDB/dummyhisdata/"
 
-sr_history_container = "sr_history"
+dummy_history_container = "dummy_history"
 metadata_file = "cosmos_metadata.json"
-metadata_key = "sr_history"
+metadata_key = "dummy_history"
 metadata_path  = f"{SAVE_FILE_METDATA}{metadata_file}"
 
 # Source Tables
@@ -839,7 +813,7 @@ tables_dict_source = { 'Voice/voice_s_evt_act': 'voice_act',
                        'Voice/voice_s_srv_req': 'voice_sr'}
 
 # Initial metadata structure with None values
-default_metadata = {"sr_history": None, "std_data": None }
+default_metadata = {"dummy_history": None, "dummy_data": None }
 
 # COMMAND ----------
 
@@ -1038,7 +1012,7 @@ class DataProcessor:
         parquet_file = parquet_files[0]
 
         # Define final output path
-        final_output_path = f"{final_output_base_path}sr_history_{datetime.now().strftime('%Y%m%d%H%M%S')}.parquet"
+        final_output_path = f"{final_output_base_path}dummy_history_{datetime.now().strftime('%Y%m%d%H%M%S')}.parquet"
 
         # Move and rename the file
         dbutils.fs.mv(parquet_file, final_output_path)
@@ -1082,7 +1056,7 @@ class CosmosDBHandler:
             dbutils.notebook.exit(f"Error deleting container '{container_name}': {e.message}")
             # raise RuntimeError(f"Error deleting container '{container_name}': {e.message}")
 
-    def insert_sr_history(self, df: pd.DataFrame, container_name: str):
+    def insert_dummy_history(self, df: pd.DataFrame, container_name: str):
         container = self.database.create_container_if_not_exists(
             id=container_name,
             partition_key=PartitionKey(path="/sr_num")
@@ -1134,7 +1108,7 @@ class CosmosDBHandler:
                 dbutils.notebook.exit(f"Unexpected error for record {row['sr_num']}: {e}")
                 # raise RuntimeError(f"Unexpected error for record {row['dummy_sr_num']}: {e}")
 
-    def fetch_sr_history(self, container_name: str, sr_num: str):
+    def fetch_dummy_history(self, container_name: str, sr_num: str):
         try:
             container = self.database.get_container_client(container_name)
             query = f"SELECT * FROM c WHERE c.sr_num = '{sr_num}'"
@@ -1357,7 +1331,7 @@ if sr_hist_pd.empty:
     # raise RuntimeError("SR history DataFrame is empty. Aborting insertion into CosmosDB.")
 
 # Insert SR history data
-cosmos_handler.insert_sr_history(df=sr_hist_pd, container_name=sr_history_container)
+cosmos_handler.insert_dummy_history(df=sr_hist_pd, container_name=dummy_history_container)
 
 # COMMAND ----------
 
